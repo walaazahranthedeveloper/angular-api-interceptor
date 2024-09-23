@@ -1,17 +1,59 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { LoggingInterceptor } from './logging.interceptor';
+import { ApiService } from './api.service';
+import { CommonModule } from '@angular/common';
+import { HTTP_INTERCEPTORS, HttpClient, HttpClientModule } from '@angular/common/http';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet,CommonModule,HttpClientModule],
+  providers:[ 
+    { provide: HTTP_INTERCEPTORS, useClass: LoggingInterceptor, multi: true },
+    ApiService
+  ],
   template: `
-    <h1>Welcome to {{title}}!</h1>
+   <div class="container">
+    <h2>Posts</h2>
+    <ul>
+      <li *ngFor="let post of posts">
+        <h3>{{ post.title }}</h3>
+        <p>{{ post.body }}</p>
+      </li>
+    </ul>
+    <button (click)="testRequest()">Test Request</button>
+  </div>
 
-    <router-outlet />
   `,
   styles: [],
 })
 export class AppComponent {
-  title = 'angular-api-interceptor';
+  posts: any[] = [];
+
+  constructor(private apiService: ApiService) {}
+
+  ngOnInit(): void {
+    // Fetch posts when the component initializes
+    this.apiService.getPosts().subscribe(
+      (data) => {
+        this.posts = data;
+        console.log('Posts fetched successfully:', this.posts);
+      },
+      (error) => {
+        console.error('Error fetching posts:', error);
+      }
+    );
+  }
+
+  testRequest() {
+    this.apiService.getPosts().subscribe(
+      (data) => {
+        console.log('Test request successful:', data);
+      },
+      (error) => {
+        console.error('Test request failed:', error);
+      }
+    );
+  }
 }
